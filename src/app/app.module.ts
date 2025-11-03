@@ -12,21 +12,22 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 import {RouterModule, Routes} from '@angular/router';
+import { authGuard } from "./auth/auth.guards";
 import {AuthModule} from './auth/auth.module';
 import {StoreModule} from '@ngrx/store';
 import {StoreDevtoolsModule} from '@ngrx/store-devtools';
-import {environment} from '../environments/environment';
 import {RouterState, StoreRouterConnectingModule} from '@ngrx/router-store';
 
 import {EffectsModule} from '@ngrx/effects';
-import {EntityDataModule} from '@ngrx/data';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { reducers } from "./reducers";
 
 
 const routes: Routes = [
   {
     path: 'courses',
-    loadChildren: () => import('./courses/courses.module').then(m => m.CoursesModule)
+    loadChildren: () => import('./courses/courses.module').then(m => m.CoursesModule),
+    canActivate: [authGuard]
   },
   {
     path: '**',
@@ -39,7 +40,8 @@ const routes: Routes = [
 @NgModule({ declarations: [
         AppComponent
     ],
-    bootstrap: [AppComponent], imports: [BrowserModule,
+    bootstrap: [AppComponent], imports: [
+      BrowserModule,
         BrowserAnimationsModule,
         RouterModule.forRoot(routes),
         MatMenuModule,
@@ -49,7 +51,14 @@ const routes: Routes = [
         MatListModule,
         MatToolbarModule,
         AuthModule.forRoot(),
-        StoreModule.forRoot({}, {}),
-        StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: !isDevMode() })], providers: [provideHttpClient(withInterceptorsFromDi())] })
+        StoreModule.forRoot(reducers, {}),
+        StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: !isDevMode() }),
+      EffectsModule.forRoot([]),
+      StoreRouterConnectingModule.forRoot({
+        stateKey: 'router',
+        routerState: RouterState.Minimal,
+      })
+  ]
+  , providers: [provideHttpClient(withInterceptorsFromDi())] })
 export class AppModule {
 }
